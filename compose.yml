@@ -1,0 +1,66 @@
+services:
+  postgres:
+    profiles: [pgsql]
+    image: postgres:18-alpine
+    container_name: cachet-pgdb
+    ports:
+      - 5432:5432
+    volumes:
+      - cachet-pgdb:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    restart: always
+    networks:
+      - pgsql
+
+  cachet-pgsql:
+    profiles: [pgsql]
+    build:
+      context: .
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    container_name: cachet-pgsql
+    ports:
+      - 8090:8000
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=postgres
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+    depends_on:
+      - postgres
+    restart: on-failure
+    networks:
+      - pgsql
+
+
+  cachet-sqlite:
+    profiles: [sqlite]
+    build:
+      context: .
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    container_name: cachet-sqlite
+    ports:
+      - "8080:8000"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - DB_CONNECTION=sqlite
+      - DB_PATH=${DB_PATH:-/app/database/database.sqlite}
+    volumes:
+      - ./db.sqlite:${DB_PATH:-/app/database/database.sqlite}
+    restart: on-failure
+    networks:
+      - sqlite
+
+volumes:
+  cachet-pgdb:
+    driver: local
+
+networks:
+  pgsql:
+  sqlite:

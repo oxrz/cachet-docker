@@ -1,0 +1,5 @@
+.dev*
+.env
+database*
+*sqlite
+Makefile
